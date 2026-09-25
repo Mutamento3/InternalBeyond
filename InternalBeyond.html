@@ -9671,6 +9671,16 @@ var IO_STORE_CN={posts:'日志',categories:'分类',about:'个人资料',apiSett
 function _ioEl(id){return document.getElementById(id)}
 function _ioFmtSize(n){n=+n||0;if(n>=1048576)return (n/1048576).toFixed(1)+' MB';if(n>=1024)return (n/1024).toFixed(0)+' KB';return n+' B'}
 function _ioYield(){return new Promise(function(r){setTimeout(r,0)})}
+
+var _IB_DESK_IDS={main:1,readingLimits:1,imggenSettings:1,ib_bubbleSplit:1,diaryCats:1};
+function _ibDeskOwned(id){id=String(id||'');return !!_IB_DESK_IDS[id]||/^seal_/.test(id)}
+function _ibIsPhoneBackup(d){if(!d||typeof d!=='object')return false;if(d.origin==='desktop')return false;if(d.origin==='mobile')return true;return /^v\d+-[apm]\b/.test(String(d.appVersion||''))}
+async function _ibMergeSettingsD(arr,data){var fromPhone=_ibIsPhoneBackup(data),out=[];window._ibSetKeptD=[];arr=Array.isArray(arr)?arr:[];
+  for(var i=0;i<arr.length;i++){var r=arr[i];if(!r||typeof r!=='object'||!r.id){out.push(r);continue}var id=String(r.id);
+    if(id==='callSettings'){var loc=null;try{loc=await dbGet('apiSettings','callSettings')}catch(e){}if(loc&&typeof loc==='object'){var m=Object.assign({},loc,r),pa={},lp=(loc.perApi&&typeof loc.perApi==='object')?loc.perApi:{},ip=(r.perApi&&typeof r.perApi==='object')?r.perApi:{};Object.keys(lp).forEach(function(k){pa[k]=Object.assign({},lp[k])});Object.keys(ip).forEach(function(k){pa[k]=Object.assign({},pa[k]||{},ip[k])});m.perApi=pa;r=m}out.push(r);continue}
+    if(fromPhone&&_ibDeskOwned(id)){var l2=null;try{l2=await dbGet('apiSettings',id)}catch(e){}if(l2){if(window._ibSetKeptD.indexOf('电脑端设置')<0)window._ibSetKeptD.push('电脑端设置');continue}}
+    out.push(r)}
+  return out}
 function ioOpen(mode){
   if(_ioBusy)return;
   _ioMode=mode==='import'?'import':'export';_ioFile=null;
@@ -9772,7 +9782,7 @@ async function _ioDoExport(){
     data[name]=arr;counts[name]=arr.length;
   }
   if(_wantMedia9&&window._ibVidD){_ioStep('正在读取：本机媒体库（视频）',76,'视频要转成文本塞进存档，体积大时这一步较慢。');await _ioYield();try{var _md9=await window._ibVidD.exportMedia();if(_md9.length){data.media=_md9;counts.__media=_md9.length}}catch(e){}}/* v142：与手机端同格式的 media 段 */
-  data.exportDate=new Date().toISOString();data.version=4;
+  data.exportDate=new Date().toISOString();data.version=4;data.origin='desktop';/* v145：写明来源，手机端据此不让它覆盖手机端设置 */
   _ioStep('正在生成存档文件（这一步会停顿）…',82,'正在把数据序列化为 JSON。这一步无法拆分，界面会短暂无响应。');
   await _ioYield();
   var str=JSON.stringify(data);
@@ -9803,6 +9813,7 @@ async function _ioDoImport(){
     _ioStep('正在写入：'+(IO_STORE_CN[name]||name)+'（'+(i+1)+'/'+list.length+'）',15+Math.round(i/list.length*75));
     await _ioYield();
     if(!Array.isArray(arr)||!arr.length){counts[name]=0;continue}
+    if(name==='apiSettings'){try{arr=await _ibMergeSettingsD(arr,data)}catch(e){}}/* v145 */
     try{await dbPutAll(name,arr);counts[name]=arr.length;done+=arr.length}
     catch(e){counts[name]=0;skipped.push(IO_STORE_CN[name]||name)}
   }
@@ -9823,6 +9834,7 @@ async function _ioDoImport(){
   var extra='';
   if(skipped.length)extra+='以下类别写入失败，已跳过：'+esc(skipped.join('、'))+'。<br>';
   if(unknown.length)extra+='存档中有本版本不认识的类别，已忽略：'+esc(unknown.join('、'))+'。<br>';
+  if(window._ibSetKeptD&&window._ibSetKeptD.length)extra+='这是手机端导出的备份：里面的'+esc(window._ibSetKeptD.join('、'))+'是之前经手机转手的旧副本，已保留本机现有的。<br>';/* v145 */
   extra+='导入为合并写入，站内原有而存档中没有的记录未被删除。';
   _ioResult(!skipped.length,'导入完成，共写入 <b>'+done+'</b> 条记录。'
     +(data.exportDate?'<br>存档生成于 '+esc(String(data.exportDate).slice(0,19).replace('T',' ')):''),
@@ -9862,7 +9874,7 @@ async function _ibBuildExportData(){
   async function g(s){try{return await dbGetAll(s)}catch(e){return[]}}
   /* 剔除测试版曾写入的原始流归档字段；保留原版正文、thinking 与其余消息结构。 */
   const cleanChats=(await g('chatMessages')).map(function(m){const c=Object.assign({},m);delete c.upstreamRaw;delete c.thinkingSources;return c});
-  return{posts:await g('posts'),categories:await g('categories'),about:await g('about'),apiSettings:(await g('apiSettings')).filter(function(r){return!(r&&r.id==='ib_fsSyncDir')}),apiConfigs:await g('apiConfigs'),chatMessages:cleanChats,letters:await g('letters'),groups:await loadGroups(),blogComments:await g('blogComments'),memories:await g('memories'),chatThreads:await g('chatThreads'),chatSummaries:await g('chatSummaries'),projects:await g('projects'),projectFiles:await g('projectFiles'),uploadedFiles:await g('uploadedFiles'),blogAnnotations:await g('blogAnnotations'),autoMemory:await g('autoMemory'),calEvents:await g('calEvents'),calNotes:await g('calNotes'),calLedger:await g('calLedger'),feed:await g('feed'),exportDate:new Date().toISOString(),version:4};
+  return{posts:await g('posts'),categories:await g('categories'),about:await g('about'),apiSettings:(await g('apiSettings')).filter(function(r){return!(r&&r.id==='ib_fsSyncDir')}),apiConfigs:await g('apiConfigs'),chatMessages:cleanChats,letters:await g('letters'),groups:await loadGroups(),blogComments:await g('blogComments'),memories:await g('memories'),chatThreads:await g('chatThreads'),chatSummaries:await g('chatSummaries'),projects:await g('projects'),projectFiles:await g('projectFiles'),uploadedFiles:await g('uploadedFiles'),blogAnnotations:await g('blogAnnotations'),autoMemory:await g('autoMemory'),calEvents:await g('calEvents'),calNotes:await g('calNotes'),calLedger:await g('calLedger'),feed:await g('feed'),exportDate:new Date().toISOString(),version:4,origin:'desktop'};
 }
 
 function _ibAutoBakOn(){try{return localStorage.getItem('ib_autoBak')==='1'}catch(e){return false}}/* 默认关闭：仅当用户在面板中手动开启（存 '1'）时生效 */
@@ -10035,7 +10047,7 @@ function _ibGuardInit(){
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'){if(_ibFsDirty&&_ibFsState==='granted')_ibFsSyncNow('hidden')/* 切后台即抢写一份，静默 */}});
   _ibRenderGuardPanel();
 }
-async function importAll(e){const file=e.target.files[0];if(!file)return;try{const text=await file.text();const data=JSON.parse(text);for(const _s of IB_STORES){if(_s==='music')continue;if(Array.isArray(data[_s])&&data[_s].length){try{await dbPutAll(_s,data[_s])}catch(_e){}}}try{if(Array.isArray(data.media)&&data.media.length&&window._ibVidD)await window._ibVidD.importMedia(data.media)}catch(_e9){}/* v142 */await migrateLockedPosts();try{localStorage.removeItem('ib_guardMuted')}catch(e2){}var _go=document.getElementById('ib-guard-overlay');if(_go){_go.remove();_ibGuardShown=false}_ibToolsCache=null;/* 导入可能带来新的外部工具配置，使缓存失效 */await loadApiConfigs();_refreshCachedUserName();_calEarliest=null;/* 同步刷新内存缓存：API 配置、用户名头像、日历最早日期 */try{if(window.IBCAL&&IBCAL.invalidate)await IBCAL.invalidate()}catch(_e3){}/* fix-r7：同 _ioDoImport，老入口一并重建日历缓存 */try{await _ibMemOneLineRepairD()}catch(_e4){}toast('数据已导入');navTo(currentPage)}catch(err){toast('导入失败：文件格式错误')}e.target.value=''}
+async function importAll(e){const file=e.target.files[0];if(!file)return;try{const text=await file.text();const data=JSON.parse(text);for(const _s of IB_STORES){if(_s==='music')continue;if(Array.isArray(data[_s])&&data[_s].length){try{await dbPutAll(_s,_s==='apiSettings'?await _ibMergeSettingsD(data[_s],data):data[_s])}catch(_e){}}}try{if(Array.isArray(data.media)&&data.media.length&&window._ibVidD)await window._ibVidD.importMedia(data.media)}catch(_e9){}/* v142 */await migrateLockedPosts();try{localStorage.removeItem('ib_guardMuted')}catch(e2){}var _go=document.getElementById('ib-guard-overlay');if(_go){_go.remove();_ibGuardShown=false}_ibToolsCache=null;/* 导入可能带来新的外部工具配置，使缓存失效 */await loadApiConfigs();_refreshCachedUserName();_calEarliest=null;/* 同步刷新内存缓存：API 配置、用户名头像、日历最早日期 */try{if(window.IBCAL&&IBCAL.invalidate)await IBCAL.invalidate()}catch(_e3){}/* fix-r7：同 _ioDoImport，老入口一并重建日历缓存 */try{await _ibMemOneLineRepairD()}catch(_e4){}toast('数据已导入');navTo(currentPage)}catch(err){toast('导入失败：文件格式错误')}e.target.value=''}
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
 
