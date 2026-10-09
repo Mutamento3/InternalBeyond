@@ -38,7 +38,7 @@
 | **Calendar** | AI 日历 — 悬浮小窗 + 挂历视窗，纪念日 / 生日 / 计划 / 记录，月相节气与传统节日，AI 读取临近日程、聊天中提起并留便笺 |
 | **Blog** | 日志 / 密码日记本 / 评论 / 批注 / 自定义剧本 / 共读学习室 |
 | **Letters** | AI 书信 — 异步通信，AI 读取你的资料后写回信 |
-| **Memory** | 长期情感记忆库 — 星图可视化 + 自然衰减 + API 上下文自动注入 + Auto Memory（AI 自主记忆） |
+| **Memory** | 长期情感记忆系统 AGB — 星图 + 海岸线可视化 + 脉络连线 + 向量检索 + 召回规则 + API 上下文自动注入 + Auto Memory（AI 自主记忆） |
 | **Music** | 本地音乐播放器 + 48 条频率可视化波形 |
 | **Profile** | 液态玻璃风格个人名片 — 头像 + 简介 + 作品集 |
 | **API** | 多端口配置中心 — 最多 30 个独立 API（归档区 60），各有昵称、关系与提示词 |
@@ -46,6 +46,7 @@
 | **DIY** | 自定义透明立绘、占卜桌布、外部工具、MCP 服务器、Internal Bridge、沙箱扩展与文件解析库 |
 | **Data** | 一键备份（全站导出 / 导入 JSON）、Token 用量仪表盘、分类器拦截后的回退 |
 | **Cinema**（DLC） | 观影室 — 外置 DLC，单独下载 `IB-Cinema.js` 放到 `DLC/` 目录即出现在导航栏；与识图的 AI 一起看本机视频：每句附此刻一帧、字幕随消息、前情梗概、胶片时间轴（留影 / Talk / 梗概），点一格弹出那一刻的截图与两人对话 |
+| **Signs**（DLC） | 星盘 — 外置 DLC，本地星盘引擎，全部计算在浏览器内完成，不发出任何网络请求。宫位制支持整宫制、Placidus 与等宫制，回归黄道与恒星黄道可切换，月交点可选真交点或平交点。星盘与设置只保存在本机 |
 
 ## ✦ 主题系统
 
@@ -174,12 +175,41 @@
 
 不在主文件里：到 [Sui-IB/InternalBeyond-Cinema](https://github.com/Sui-IB/InternalBeyond-Cinema) 下载 `IB-Cinema.js`，放到 `InternalBeyond.html` 同级的 `DLC/` 目录（路径 `DLC/IB-Cinema.js`），刷新后导航栏出现 Cinema；没有这个文件时导航栏没有 Cinema，其余功能不受影响。选一部本机视频与识图的 TA 一起看：每条消息附此刻一帧（画质 384px 至原画质可选），可加 .srt / .vtt 字幕随消息附播放点之前的几句，每隔一段把字幕压成前情梗概，看完可「回顾」整片；留影、Talk、梗概都落在胶片时间轴上，点一格弹出那一刻的截图与两人的对话。视频与字幕不入库、不随备份、不续播；聊天进「观影 · 片名」话题频道，与其它频道一样随备份互通。
 
-### Memory — 长期记忆库
+### Signs — 星盘（外置 DLC）
 
-借鉴 GitHub Ombre Brain 理念的 AI 长期记忆系统。每条记忆带有情感坐标（效价 / 唤醒度）、重要性评分和自然衰减。星图以二维情感坐标可视化所有记忆，时间轴以行星形态展示分布。最多 7 条置顶记忆，四种可见性级别。多来源创建（手动 / Chat / Blog / Letters / Story / Tea）。API 调用时自动检索相关记忆注入上下文，Token 预算可配置。
+不在主文件里：下载 `IB-Signs.js`，放到 `InternalBeyond.html` 同级的 `DLC/` 目录（路径 `DLC/IB-Signs.js`），刷新后导航栏出现 Signs。本地星盘引擎，全部计算在浏览器内完成，不发出任何网络请求。宫位制支持整宫制、Placidus 与等宫制，回归黄道与恒星黄道可切换，月交点可选真交点或平交点。星盘与设置只保存在本机，不随主站备份往返。换机或清理浏览器前，请在下方「导出星盘」单独另存一份。
 
-- **Auto Memory**：每个 API 可独立开启的 AI 自主长期记忆。AI 在对话中自行决定何时创建、更新记忆，档案以舷窗（Porthole）液态玻璃镜片可视化展示。支持归档后的 API 档案保留。每条档案可在卡上直接切优先级（★ always / ◐ normal / ○ low）；AI 要写入或改动 always 级条目时先出确认卡（写入 always / 改为 normal / 不写），点了才落库。always 条目随人设一起进 system 被提示缓存记住，只在这些条目本身改动时重建一次。
-- **记忆总结**：Memory 页「记忆总结」——选一位 TA 与时间范围，把这段时间里 TA 能看见的材料（自己的档案、可见的记忆库、日历、对话摘要、有权限时的日志）交给 TA 本人的 API 提炼成一条 Auto Memory 档案条目；材料超过 6000 字自动分段两阶段提炼（先分离素材卡片，再铸型成条目），过程有进度卡与读秒、可停止，写好后可改再写入，也能看压缩前的素材卡片与原始材料。
+### Memory — 长期记忆系统 AGB
+
+AGB（The Abyss Gazing Back）是 IB 的长期记忆系统。TA 回话前，系统按八条召回规则从记忆库里挑选和你这句话相关的记忆注入上下文——聊到才想起，没有相关的就一条不给。
+
+**记忆库**
+
+每条记忆带有情感坐标（Valence 效价 / Arousal 唤醒度）、重要性评分和领域标签。星图以二维情感坐标可视化所有记忆，颜色代表领域，大小代表重要性。最多 20 条置顶记忆每轮常驻，四种可见性级别（公开 / 仅指定 / 排除指定 / 完全私密）。多来源创建（手动 / Chat / Blog / Letters / Story / Tea / Call）。
+
+**Nameless Coastline**
+
+星图窗右上角可在星空与海岸之间切换。海岸以 WebGL 着色器在浏览器内实时绘制——每一条记忆化为海岸上的一粒星砂，散布在潮汐线上，效价决定沿岸位置，唤醒度决定离水远近。三档画面（原版 / 华丽 / 长曝光），点「wade in」进全屏。明亮主题下是白浪翻涌的日光海岸，暗色主题下是月色潮汐。
+
+**透视 Fathom**
+
+页头右上角切到透视区（The Abyss Gazing Back）。按时间列出每一轮 TA 回话前想起了哪几条记忆、凭什么想起、哪几条差一点。不再成立的记忆点「过时」，平时不再想起，可随时取消；想起了不相干的点「不相关」，记进错题本。
+
+**记忆连线 Strands**
+
+透视区上半是脉络板块。选一位 TA，点 Find Strands：管家模型把它可见的记忆分组，逐组找出反复出现的同一主题，各写一段观察，列为待确认。确认后生效，TA 召回其中的记忆时会同时看到这段观察。示意图每行一条脉络、每格一页记忆，度尺一次看一年，十二个月都画出来，拖分点可调月份宽度。
+
+**召回规则**
+
+TA 回话前按八条规则挑选记忆：①泛词标签不单独放行；②同一条脉络一轮最多两个位子；③近似去重；④过时记忆默认不给；⑤字面匹配有最低门槛；⑥向量需要突出；⑦落差淘汰；⑧新写不降门槛。余温（可选）：上一轮刚想起的记忆，这一轮接着聊却没想起别的时留一行提醒。
+
+**Auto Memory**
+
+每个 API 可独立开启的 AI 自主长期记忆。AI 在对话中自行决定何时创建、更新记忆，档案以舷窗（Porthole）液态玻璃镜片可视化展示。档案里写着「谁是谁」的条目会自动和记忆库连上——话里出现这个名字，这条档案就出来，还可以顺着档案牵出记忆库里最贴这句话的一条。支持归档后的 API 档案保留。
+
+**记忆总结**
+
+选一位 TA 与时间范围，把这段时间里 TA 能看见的材料交给它提炼成一条档案条目；材料超过 6000 字自动分段两阶段提炼，过程有进度卡与读秒、可停止，写好后可改再写入。
 
 
 ### ICode — AI 代码工作区
@@ -257,6 +287,7 @@ IB 支持多种 AI 服务（最多 30 个端口，归档区另 60 个）：
 InternalBeyond.html       ← 主文件（浏览器打开这个）
 DLC/
   IB-Cinema.js             ← 观影室（可选外置 DLC，另一个仓库单独下载）
+  IB-Signs.js              ← 星盘（可选外置 DLC）
 game/
   game_module.js           ← 像素房间引擎
   *.png                    ← 精灵图、场景素材
@@ -267,11 +298,11 @@ game/
 
 ## ✦ 技术规格
 
-- **架构**：纯前端单文件 HTML + 独立游戏引擎 JS。无框架、无构建，主程序无需服务器；可选通过 Internal Bridge 连接自建后端。
-- **字体**：Cormorant Garamond · Noto Sans SC · Noto Serif SC · Raleway · Great Vibes · Pinyon Script · Spectral（Google Fonts CDN）。
-- **视觉**：CSS 玻璃拟态、Canvas 雨滴（45 滴）与水波纹、棱镜光影、烛火月光、浮动微尘、交叉溶解过渡。
+- **架构**：纯前端单文件 HTML + 独立游戏引擎 JS + 可选外置 DLC。无框架、无构建，主程序无需服务器；可选通过 Internal Bridge 连接自建后端。
+- **字体**：Cormorant Garamond（标题）· Noto Sans SC（正文与 UI）· Noto Serif SC（按钮与强调）· Raleway（副标题）· Great Vibes（Sui 签名）· Pinyon Script（海岸标题）· Spectral（Claude 签名）。通过 Google Fonts CDN 加载。
+- **视觉**：CSS 玻璃拟态、Canvas 雨滴（45 滴）与水波纹、棱镜光影、烛火月光、浮动微尘、交叉溶解过渡。Memory 海岸以 WebGL 着色器实时绘制。
 - **AI 协议**：Anthropic 原生格式 + OpenAI 兼容格式，覆盖官方及中转站 API。
-- **构建**：Claude (Opus 4.6) 构建 · Opus 4.8 / Sonnet 4.6 / Fable 5 / Opus 5 / ChatGPT 5.6 Sol 参与辅助构建 · GPT-IMAGE-2 贴图 · Adobe Photoshop CS 设计编绘。
+- **构建**：Claude (Opus 4.6) 构建 · Claude (Fable 5.1) · Claude (Opus 5.5) · Claude (Opus 4.8) · Claude (Sonnet 4.6) · Claude (Fable 5) · Claude (Opus 5) · ChatGPT (5.6 Sol) 参与辅助构建 · GPT-IMAGE-2 贴图 · Adobe Photoshop CS 设计编绘。
 
 ---
 
@@ -290,12 +321,14 @@ Connect your own AI API keys to unlock all interactive features. Supports Claude
 - **Calendar** — AI-readable calendar with floating widget and full window: anniversaries, birthdays, plans and records, moon phases and solar terms, per-AI visibility, in-chat mentions and notes, plus optional AI write operations.
 - **Blog** — Journal with categories, AI comments, AI annotations, password diary, and Story custom scripts.
 - **Letters** — Asynchronous AI correspondence.
-- **Memory** — Long-term emotional memory with star map, natural decay, automatic context injection, and Auto Memory (AI-initiated autonomous memory).
+- **Memory** — Long-term emotional memory system AGB (The Abyss Gazing Back): star map, Nameless Coastline (WebGL shore visualization), Strands (thematic memory threads), eight recall rules, automatic context injection, and Auto Memory (AI-initiated autonomous memory).
 - **Music** — Local audio player with 48-band frequency visualizer.
 - **Profile** — Liquid glass personal card.
 - **API** — Up to 30 independent endpoints (plus 60 archived) with custom nicknames, relationships, and system prompts.
 - **ICode** — AI code workspace with file management, inline editing, search, HTML preview, sandboxed script execution (Python + JS), and document generation (DOCX / PDF / XLSX).
 - **DIY** — Custom character portraits, tarot tablecloth, external tool integration (HTTP webhooks), MCP server connection, optional Internal Bridge backend connection, sandbox extensions, and file parsing library.
+- **Cinema** (DLC) — Watch local videos with AI: per-frame analysis, subtitle sync, recap generation, and a film-strip timeline.
+- **Signs** (DLC) — Local ephemeris engine: natal charts, whole-sign / Placidus / equal house systems, tropical and sidereal zodiacs, true and mean lunar nodes. All computation runs in the browser; no network requests.
 - **Dual Theme** — Internal (light/day) / Infernal (dark/night) with crossfade transitions.
 
 ### Quick start
@@ -335,7 +368,7 @@ Any copy, deployment, mirror, fork or modified version must keep the copyright l
 **署名与声明保留**：任何复制、部署、镜像、Fork 或修改版本，均须保留版权行「Copyright © 2025–2026 Sui」与 `LICENSE` 顶部的 Required Notice、`LICENSE` 与 `LICENSES/` 文件、界面内的作者署名（Sui / 水、联系邮箱与原仓库链接）以及指向本仓库的可见链接；修改版须明确标注为非官方修改版，不得冒充官方或声称获得授权。署名权属于作者本人，不随任何许可转让。
 未经 Sui 书面授权，不得出售、收费分发、打包进付费产品或服务、商业托管、收费部署或以其他方式获取商业利益。
 
-本项目使用 Anthropic Claude (Opus 4.6) 进行开发构建，Anthropic Claude (Fable 5)、Claude (Opus 4.8)、Claude (Sonnet 4.6)、Claude (Opus 5)、ChatGPT (5.6 Sol) 亦参与了编程工作。AI 工具为辅助创作工具，不对项目内容拥有版权。本声明适用于项目的所有版本与衍生形式。第三方服务名称与商标归各自权利人所有。
+本项目使用 Anthropic Claude (Opus 4.6) 进行开发构建，Anthropic Claude (Fable 5)、Claude (Fable 5.1)、Claude (Opus 5.5)、Claude (Opus 4.8)、Claude (Sonnet 4.6)、Claude (Opus 5)、ChatGPT (5.6 Sol) 亦参与了编程工作。项目图像素材均由 OpenAI GPT-IMAGE-2 生成，并由作者使用 Adobe Photoshop CS 进行修改、界面设计与编绘。AI 工具为辅助创作工具，不对项目内容拥有版权。本声明适用于项目的所有版本与衍生形式。第三方服务名称与商标归各自权利人所有。
 
 完整条款见根目录 `LICENSE` 与 `LICENSES/` 文件夹。商业授权联系：1282901880@qq.com。
 
